@@ -3,7 +3,6 @@ package com.parentcontrol;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -16,22 +15,13 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERM_REQUEST = 1;
-    private static final int OVERLAY_REQUEST = 2;
     private static final int ACCESSIBILITY_REQUEST = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Шаг 1: Разрешение поверх экрана
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, OVERLAY_REQUEST);
-            return;
-        }
-
-        // Шаг 2: Спец. возможности
+        // Шаг 1: Спец. возможности
         if (!isAccessibilityEnabled()) {
             startActivityForResult(
                 new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS),
