@@ -20,7 +20,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Status"
+        android:label="ИИ Асистент"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/Theme.AppCompat.Light">
 
